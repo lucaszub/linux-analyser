@@ -1,6 +1,6 @@
-import { Server } from 'lucide-react';
-import type { SystemData } from '../types/system';
-import { formatUptime } from '../utils/formatters';
+import { Server } from "lucide-react";
+import type { SystemData } from "../types/system";
+import { formatUptime } from "../utils/formatters";
 
 interface SystemInfoProps {
   data: SystemData | null;
@@ -39,7 +39,7 @@ const SystemInfo = ({ data }: SystemInfoProps) => {
         <div className="flex justify-between items-center py-3 px-3 rounded-lg hover:bg-gray-50 transition-colors">
           <span className="text-sm text-gray-500 font-medium">Load Avg</span>
           <span className="text-sm font-semibold">
-            {data.cpu.load_avg.map(l => l.toFixed(2)).join(', ')}
+            {data.cpu.load_avg.map((l) => l.toFixed(2)).join(", ")}
           </span>
         </div>
         <div className="flex justify-between items-center py-3 px-3 rounded-lg hover:bg-gray-50 transition-colors">
@@ -50,7 +50,9 @@ const SystemInfo = ({ data }: SystemInfoProps) => {
         </div>
         <div className="flex justify-between items-center py-3 px-3 rounded-lg hover:bg-gray-50 transition-colors">
           <span className="text-sm text-gray-500 font-medium">Processus</span>
-          <span className="text-sm font-semibold">{data.system.process_count}</span>
+          <span className="text-sm font-semibold">
+            {data.system.process_count}
+          </span>
         </div>
         <div className="flex justify-between items-center py-3 px-3 rounded-lg hover:bg-gray-50 transition-colors">
           <span className="text-sm text-gray-500 font-medium">Connexions</span>

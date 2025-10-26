@@ -1,5 +1,5 @@
-import { Folder, ChevronRight, File } from 'lucide-react';
-import type { DirectorySizeEnhanced } from '../types/system';
+import { Folder, ChevronRight, File } from "lucide-react";
+import type { DirectorySizeEnhanced } from "../types/system";
 
 interface Props {
   directories: DirectorySizeEnhanced[];
@@ -7,12 +7,16 @@ interface Props {
   formatSize: (bytes: number) => string;
 }
 
-export default function DirectoryTreeView({ directories, onDirectoryClick, formatSize }: Props) {
+export default function DirectoryTreeView({
+  directories,
+  onDirectoryClick,
+  formatSize,
+}: Props) {
   const getColorByPercent = (percent: number) => {
-    if (percent > 50) return 'from-red-500 to-red-600';
-    if (percent > 30) return 'from-orange-500 to-orange-600';
-    if (percent > 15) return 'from-yellow-500 to-yellow-600';
-    return 'from-blue-500 to-blue-600';
+    if (percent > 50) return "from-red-500 to-red-600";
+    if (percent > 30) return "from-orange-500 to-orange-600";
+    if (percent > 15) return "from-yellow-500 to-yellow-600";
+    return "from-blue-500 to-blue-600";
   };
 
   if (directories.length === 0) {
@@ -22,7 +26,9 @@ export default function DirectoryTreeView({ directories, onDirectoryClick, forma
         <div className="text-center py-12 text-gray-500">
           <Folder className="w-16 h-16 mx-auto mb-4 text-gray-300" />
           <p className="font-medium">Aucun répertoire trouvé</p>
-          <p className="text-xs mt-2">Essayez un autre chemin ou vérifiez les permissions</p>
+          <p className="text-xs mt-2">
+            Essayez un autre chemin ou vérifiez les permissions
+          </p>
         </div>
       </div>
     );
@@ -31,7 +37,7 @@ export default function DirectoryTreeView({ directories, onDirectoryClick, forma
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:shadow-gray-200/50 transition-all">
       <h3 className="text-base font-semibold mb-6">Répertoires (Top 20)</h3>
-      
+
       <div className="space-y-3">
         {directories.map((dir, index) => (
           <div
@@ -46,19 +52,25 @@ export default function DirectoryTreeView({ directories, onDirectoryClick, forma
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-base font-bold truncate">{dir.name}</span>
+                    <span className="text-base font-bold truncate">
+                      {dir.name}
+                    </span>
                     <span className="text-sm font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-lg">
                       {dir.percent_of_analyzed.toFixed(1)}%
                     </span>
                     <ChevronRight className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                   </div>
-                  <p className="text-xs text-gray-500 font-mono truncate">{dir.path}</p>
+                  <p className="text-xs text-gray-500 font-mono truncate">
+                    {dir.path}
+                  </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-4 shrink-0">
                 <div className="text-right">
-                  <p className="text-lg font-bold text-gray-900">{formatSize(dir.size)}</p>
+                  <p className="text-lg font-bold text-gray-900">
+                    {formatSize(dir.size)}
+                  </p>
                   <p className="text-xs text-gray-500">#{index + 1}</p>
                 </div>
               </div>
@@ -68,21 +80,33 @@ export default function DirectoryTreeView({ directories, onDirectoryClick, forma
             <div className="space-y-3">
               <div>
                 <div className="flex justify-between items-center mb-1">
-                  <span className="text-xs text-gray-500 font-medium">% de la partition</span>
-                  <span className="text-xs font-bold text-gray-700">{dir.percent_of_partition.toFixed(2)}%</span>
+                  <span className="text-xs text-gray-500 font-medium">
+                    % de la partition
+                  </span>
+                  <span className="text-xs font-bold text-gray-700">
+                    {dir.percent_of_partition.toFixed(2)}%
+                  </span>
                 </div>
                 <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div
-                    className={`h-full bg-linear-to-r ${getColorByPercent(dir.percent_of_partition)} transition-all duration-500`}
-                    style={{ width: `${Math.min(dir.percent_of_partition, 100)}%` }}
+                    className={`h-full bg-linear-to-r ${getColorByPercent(
+                      dir.percent_of_partition
+                    )} transition-all duration-500`}
+                    style={{
+                      width: `${Math.min(dir.percent_of_partition, 100)}%`,
+                    }}
                   />
                 </div>
               </div>
 
               <div>
                 <div className="flex justify-between items-center mb-1">
-                  <span className="text-xs text-gray-500 font-medium">% du total analysé</span>
-                  <span className="text-xs font-bold text-blue-700">{dir.percent_of_analyzed.toFixed(2)}%</span>
+                  <span className="text-xs text-gray-500 font-medium">
+                    % du total analysé
+                  </span>
+                  <span className="text-xs font-bold text-blue-700">
+                    {dir.percent_of_analyzed.toFixed(2)}%
+                  </span>
                 </div>
                 <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div
@@ -98,13 +122,19 @@ export default function DirectoryTreeView({ directories, onDirectoryClick, forma
               <div className="flex items-center gap-2">
                 <File className="w-4 h-4 text-gray-400" />
                 <span className="text-xs text-gray-600">
-                  <span className="font-semibold">{dir.file_count.toLocaleString()}</span> fichiers
+                  <span className="font-semibold">
+                    {dir.file_count.toLocaleString()}
+                  </span>{" "}
+                  fichiers
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <Folder className="w-4 h-4 text-gray-400" />
                 <span className="text-xs text-gray-600">
-                  <span className="font-semibold">{dir.dir_count.toLocaleString()}</span> sous-répertoires
+                  <span className="font-semibold">
+                    {dir.dir_count.toLocaleString()}
+                  </span>{" "}
+                  sous-répertoires
                 </span>
               </div>
             </div>

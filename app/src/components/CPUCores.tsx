@@ -1,5 +1,5 @@
-import { List, RefreshCw } from 'lucide-react';
-import type { SystemData } from '../types/system';
+import { List, RefreshCw } from "lucide-react";
+import type { SystemData } from "../types/system";
 
 interface CPUCoresProps {
   data: SystemData | null;
@@ -10,10 +10,10 @@ const CPUCores = ({ data, onRefresh }: CPUCoresProps) => {
   if (!data) return null;
 
   const getColorClass = (percent: number) => {
-    if (percent < 30) return 'bg-green-50 text-green-700';
-    if (percent < 60) return 'bg-blue-50 text-blue-700';
-    if (percent < 80) return 'bg-orange-50 text-orange-700';
-    return 'bg-red-50 text-red-700';
+    if (percent < 30) return "bg-green-50 text-green-700";
+    if (percent < 60) return "bg-blue-50 text-blue-700";
+    if (percent < 80) return "bg-orange-50 text-orange-700";
+    return "bg-red-50 text-red-700";
   };
 
   return (
@@ -52,10 +52,15 @@ const CPUCores = ({ data, onRefresh }: CPUCoresProps) => {
           </thead>
           <tbody className="divide-y divide-gray-100">
             {data.cpu.cpu_per_core.map((percent, index) => (
-              <tr key={index} className="hover:bg-gray-50 transition-colors group">
+              <tr
+                key={index}
+                className="hover:bg-gray-50 transition-colors group"
+              >
                 <td className="py-3.5 text-sm font-semibold">Core {index}</td>
                 <td className="py-3.5 text-sm font-semibold text-right">
-                  <span className={`px-2 py-1 rounded-lg ${getColorClass(percent)}`}>
+                  <span
+                    className={`px-2 py-1 rounded-lg ${getColorClass(percent)}`}
+                  >
                     {percent.toFixed(1)}%
                   </span>
                 </td>

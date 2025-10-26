@@ -1,6 +1,6 @@
-import { Folder } from 'lucide-react';
-import type { SystemData } from '../types/system';
-import { formatBytes } from '../utils/formatters';
+import { Folder } from "lucide-react";
+import type { SystemData } from "../types/system";
+import { formatBytes } from "../utils/formatters";
 
 interface DiskDetailsProps {
   data: SystemData | null;
@@ -11,15 +11,15 @@ const DiskDetails = ({ data }: DiskDetailsProps) => {
 
   const diskPercent = data.disk.usage.percent;
   const getColorClasses = (percent: number) => {
-    if (percent < 70) return 'from-gray-700 to-gray-900';
-    if (percent < 85) return 'from-orange-500 to-orange-600';
-    return 'from-red-500 to-red-600';
+    if (percent < 70) return "from-gray-700 to-gray-900";
+    if (percent < 85) return "from-orange-500 to-orange-600";
+    return "from-red-500 to-red-600";
   };
 
   const getTextColor = (percent: number) => {
-    if (percent < 70) return 'text-gray-500';
-    if (percent < 85) return 'text-orange-600';
-    return 'text-red-600';
+    if (percent < 70) return "text-gray-500";
+    if (percent < 85) return "text-orange-600";
+    return "text-red-600";
   };
 
   return (
@@ -51,7 +51,9 @@ const DiskDetails = ({ data }: DiskDetailsProps) => {
             </div>
             <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
               <div
-                className={`h-full bg-linear-to-r ${getColorClasses(diskPercent)} rounded-full shadow-sm transition-all duration-700`}
+                className={`h-full bg-linear-to-r ${getColorClasses(
+                  diskPercent
+                )} rounded-full shadow-sm transition-all duration-700`}
                 style={{ width: `${Math.min(diskPercent, 100)}%` }}
               ></div>
             </div>

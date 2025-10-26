@@ -21,11 +21,13 @@ Répondre à la question : **"Qu'est-ce qui prend le plus de place sur mon disqu
 ## 🏗️ Architecture de la solution
 
 ### Stack technique
+
 - **Backend** : FastAPI + Python (`psutil` pour la collecte de données)
 - **Frontend** : React + TypeScript + Tailwind CSS
 - **Communication** : REST API (JSON)
 
 ### Flux de données
+
 ```
 [Utilisateur] → [React Component] → [API Service] → [FastAPI Route] → [Python psutil] → [Système de fichiers]
                                                                                               ↓
@@ -39,6 +41,7 @@ Répondre à la question : **"Qu'est-ce qui prend le plus de place sur mon disqu
 ### **ÉTAPE 1 : Backend - Ajout des fonctions de collecte de données**
 
 #### 1.1 Ouvrir le fichier `data.py`
+
 ```bash
 code /home/lucas-zubiarrain/poc-linux-dash/data.py
 ```
@@ -49,7 +52,7 @@ code /home/lucas-zubiarrain/poc-linux-dash/data.py
 def get_disk_partitions_details():
     """
     Récupère les détails de toutes les partitions montées sur le système.
-    
+
     Returns:
         list: Liste de dictionnaires contenant les informations des partitions
     """
@@ -75,20 +78,20 @@ def get_disk_partitions_details():
 def get_directory_sizes(path="/", max_depth=1):
     """
     Analyse les répertoires pour trouver ce qui prend le plus de place.
-    
+
     ATTENTION: Cette fonction peut être lente sur les gros systèmes de fichiers.
     Utilisez max_depth=1 pour limiter la profondeur de l'analyse.
-    
+
     Args:
         path (str): Chemin du répertoire à analyser (défaut: "/")
         max_depth (int): Profondeur maximale de l'analyse (défaut: 1)
-    
+
     Returns:
         list: Top 20 des répertoires triés par taille décroissante
     """
     import os
     directories = []
-    
+
     try:
         for entry in os.scandir(path):
             if entry.is_dir(follow_symlinks=False):
@@ -103,7 +106,7 @@ def get_directory_sizes(path="/", max_depth=1):
                             except (OSError, FileNotFoundError):
                                 # Fichier supprimé ou inaccessible pendant le scan
                                 continue
-                    
+
                     directories.append({
                         "path": entry.path,
                         "name": entry.name,
@@ -114,22 +117,24 @@ def get_directory_sizes(path="/", max_depth=1):
                 except (PermissionError, OSError):
                     # Répertoire inaccessible (permissions insuffisantes)
                     continue
-        
+
         # Trier par taille décroissante et retourner le top 20
         directories.sort(key=lambda x: x['size'], reverse=True)
         return directories[:20]
-        
+
     except (PermissionError, OSError, FileNotFoundError) as e:
         print(f"Erreur lors de l'analyse de {path}: {e}")
         return []
 ```
 
 #### 1.3 Importer `os` en haut du fichier si ce n'est pas déjà fait
+
 ```python
 import os
 ```
 
 **✅ Validation :** Le fichier `data.py` doit maintenant contenir 3 fonctions :
+
 - `get_system_data()`
 - `get_disk_partitions_details()`
 - `get_directory_sizes(path, max_depth)`
@@ -139,11 +144,13 @@ import os
 ### **ÉTAPE 2 : Backend - Ajout des routes API**
 
 #### 2.1 Ouvrir le fichier `main.py`
+
 ```bash
 code /home/lucas-zubiarrain/poc-linux-dash/main.py
 ```
 
 #### 2.2 Modifier les imports
+
 ```python
 from data import get_system_data, get_disk_partitions_details, get_directory_sizes
 ```
@@ -155,7 +162,7 @@ from data import get_system_data, get_disk_partitions_details, get_directory_siz
 async def disk_partitions():
     """
     Endpoint pour récupérer toutes les partitions montées.
-    
+
     Returns:
         JSON: { "partitions": [...] }
     """
@@ -166,10 +173,10 @@ async def disk_partitions():
 async def disk_analysis(path: str = "/"):
     """
     Endpoint pour analyser l'utilisation du disque par répertoire.
-    
+
     Query params:
         path (str): Chemin à analyser (défaut: "/")
-    
+
     Returns:
         JSON: { "path": "/home", "directories": [...] }
     """
@@ -180,6 +187,7 @@ async def disk_analysis(path: str = "/"):
 ```
 
 **✅ Validation :** Tester les endpoints
+
 ```bash
 # Terminal 1 - Lancer le serveur
 cd /home/lucas-zubiarrain/poc-linux-dash
@@ -196,6 +204,7 @@ curl http://localhost:8000/disk/analysis?path=/home
 ### **ÉTAPE 3 : Frontend - Mise à jour des types TypeScript**
 
 #### 3.1 Ouvrir le fichier `app/src/types/system.ts`
+
 ```bash
 code /home/lucas-zubiarrain/poc-linux-dash/app/src/types/system.ts
 ```
@@ -228,6 +237,7 @@ export interface DiskAnalysis {
 ```
 
 **✅ Validation :** Vérifier qu'il n'y a pas d'erreurs TypeScript
+
 ```bash
 cd /home/lucas-zubiarrain/poc-linux-dash/app
 npm run build
@@ -238,36 +248,45 @@ npm run build
 ### **ÉTAPE 4 : Frontend - Mise à jour du service API**
 
 #### 4.1 Ouvrir le fichier `app/src/services/api.ts`
+
 ```bash
 code /home/lucas-zubiarrain/poc-linux-dash/app/src/services/api.ts
 ```
 
 #### 4.2 Mettre à jour les imports
+
 ```typescript
-import type { SystemData, DiskPartition, DiskAnalysis } from '../types/system';
+import type { SystemData, DiskPartition, DiskAnalysis } from "../types/system";
 ```
 
 #### 4.3 Ajouter les nouvelles fonctions
 
 ```typescript
-export const fetchDiskPartitions = async (): Promise<{ partitions: DiskPartition[] }> => {
+export const fetchDiskPartitions = async (): Promise<{
+  partitions: DiskPartition[];
+}> => {
   const response = await fetch(`${API_URL}/disk/partitions`);
   if (!response.ok) {
-    throw new Error('Failed to fetch disk partitions');
+    throw new Error("Failed to fetch disk partitions");
   }
   return response.json();
 };
 
-export const fetchDiskAnalysis = async (path: string = '/'): Promise<DiskAnalysis> => {
-  const response = await fetch(`${API_URL}/disk/analysis?path=${encodeURIComponent(path)}`);
+export const fetchDiskAnalysis = async (
+  path: string = "/"
+): Promise<DiskAnalysis> => {
+  const response = await fetch(
+    `${API_URL}/disk/analysis?path=${encodeURIComponent(path)}`
+  );
   if (!response.ok) {
-    throw new Error('Failed to fetch disk analysis');
+    throw new Error("Failed to fetch disk analysis");
   }
   return response.json();
 };
 ```
 
 **✅ Validation :** Le fichier `api.ts` doit maintenant exporter 3 fonctions :
+
 - `fetchSystemData()`
 - `fetchDiskPartitions()`
 - `fetchDiskAnalysis(path)`
@@ -277,6 +296,7 @@ export const fetchDiskAnalysis = async (path: string = '/'): Promise<DiskAnalysi
 ### **ÉTAPE 5 : Frontend - Création du composant DiskAnalysis**
 
 #### 5.1 Créer le fichier `app/src/components/DiskAnalysis.tsx`
+
 ```bash
 touch /home/lucas-zubiarrain/poc-linux-dash/app/src/components/DiskAnalysis.tsx
 code /home/lucas-zubiarrain/poc-linux-dash/app/src/components/DiskAnalysis.tsx
@@ -285,17 +305,17 @@ code /home/lucas-zubiarrain/poc-linux-dash/app/src/components/DiskAnalysis.tsx
 #### 5.2 Copier le code suivant dans le fichier
 
 ```typescript
-import { useEffect, useState } from 'react';
-import { Folder, RefreshCw, ChevronRight } from 'lucide-react';
-import { fetchDiskAnalysis } from '../services/api';
-import type { DirectorySize } from '../types/system';
+import { useEffect, useState } from "react";
+import { Folder, RefreshCw, ChevronRight } from "lucide-react";
+import { fetchDiskAnalysis } from "../services/api";
+import type { DirectorySize } from "../types/system";
 
 export function DiskAnalysis() {
   const [directories, setDirectories] = useState<DirectorySize[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentPath, setCurrentPath] = useState('/');
+  const [currentPath, setCurrentPath] = useState("/");
   const [error, setError] = useState<string | null>(null);
-  const [pathHistory, setPathHistory] = useState<string[]>(['/']);
+  const [pathHistory, setPathHistory] = useState<string[]>(["/"]);
 
   const loadData = async (path: string) => {
     try {
@@ -305,7 +325,9 @@ export function DiskAnalysis() {
       setDirectories(data.directories);
       setCurrentPath(data.path);
     } catch (err) {
-      setError('Erreur lors du chargement des données. Vérifiez que le serveur est lancé.');
+      setError(
+        "Erreur lors du chargement des données. Vérifiez que le serveur est lancé."
+      );
       console.error(err);
     } finally {
       setLoading(false);
@@ -339,10 +361,10 @@ export function DiskAnalysis() {
   };
 
   const getBarColor = (percent: number) => {
-    if (percent > 80) return 'from-red-500 to-red-600';
-    if (percent > 60) return 'from-orange-500 to-orange-600';
-    if (percent > 40) return 'from-yellow-500 to-yellow-600';
-    return 'from-blue-500 to-blue-600';
+    if (percent > 80) return "from-red-500 to-red-600";
+    if (percent > 60) return "from-orange-500 to-orange-600";
+    if (percent > 40) return "from-yellow-500 to-yellow-600";
+    return "from-blue-500 to-blue-600";
   };
 
   if (loading) {
@@ -380,7 +402,9 @@ export function DiskAnalysis() {
           <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
             <Folder className="w-4 h-4 text-gray-700" />
           </div>
-          <h2 className="text-base font-semibold tracking-tight">Analyse détaillée du disque</h2>
+          <h2 className="text-base font-semibold tracking-tight">
+            Analyse détaillée du disque
+          </h2>
         </div>
         <div className="flex items-center gap-2">
           {pathHistory.length > 1 && (
@@ -403,13 +427,15 @@ export function DiskAnalysis() {
 
       <div className="mb-4 p-3 bg-gray-50 rounded-lg">
         <p className="text-xs text-gray-500 font-medium">Chemin analysé</p>
-        <p className="text-sm font-semibold text-gray-900 font-mono break-all">{currentPath}</p>
+        <p className="text-sm font-semibold text-gray-900 font-mono break-all">
+          {currentPath}
+        </p>
       </div>
 
       <div className="space-y-3">
         {directories.map((dir, index) => {
           const percentOfMax = (dir.size / maxSize) * 100;
-          
+
           return (
             <div
               key={dir.path}
@@ -431,16 +457,20 @@ export function DiskAnalysis() {
                   </span>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
                   <div
-                    className={`h-full bg-gradient-to-r ${getBarColor(percentOfMax)} rounded-full shadow-sm transition-all duration-500`}
+                    className={`h-full bg-gradient-to-r ${getBarColor(
+                      percentOfMax
+                    )} rounded-full shadow-sm transition-all duration-500`}
                     style={{ width: `${percentOfMax}%` }}
                   />
                 </div>
                 <div className="flex justify-between items-center">
-                  <p className="text-xs text-gray-500 font-mono truncate max-w-md">{dir.path}</p>
+                  <p className="text-xs text-gray-500 font-mono truncate max-w-md">
+                    {dir.path}
+                  </p>
                   <p className="text-xs text-gray-600 font-semibold">
                     {percentOfMax.toFixed(1)}% du plus gros
                   </p>
@@ -454,7 +484,9 @@ export function DiskAnalysis() {
           <div className="text-center py-8 text-gray-500">
             <Folder className="w-12 h-12 mx-auto mb-3 text-gray-300" />
             <p className="font-medium">Aucun répertoire trouvé ou accessible</p>
-            <p className="text-xs mt-1">Essayez un autre chemin ou vérifiez les permissions</p>
+            <p className="text-xs mt-1">
+              Essayez un autre chemin ou vérifiez les permissions
+            </p>
           </div>
         )}
       </div>
@@ -470,30 +502,38 @@ export function DiskAnalysis() {
 ### **ÉTAPE 6 : Frontend - Intégration dans App.tsx**
 
 #### 6.1 Ouvrir le fichier `app/src/App.tsx`
+
 ```bash
 code /home/lucas-zubiarrain/poc-linux-dash/app/src/App.tsx
 ```
 
 #### 6.2 Ajouter l'import du composant
+
 ```typescript
-import { DiskAnalysis } from './components/DiskAnalysis';
+import { DiskAnalysis } from "./components/DiskAnalysis";
 ```
 
 #### 6.3 Ajouter le composant dans le JSX après le composant `<CPUCores />`
 
 ```typescript
-{/* CPU Cores */}
+{
+  /* CPU Cores */
+}
 <div className="mb-6">
   <CPUCores data={data} />
-</div>
+</div>;
 
-{/* Nouvelle section: Analyse détaillée du disque */}
+{
+  /* Nouvelle section: Analyse détaillée du disque */
+}
 <div className="mb-6">
   <DiskAnalysis />
-</div>
+</div>;
 
-{/* Disk Details */}
-<DiskDetails data={data} />
+{
+  /* Disk Details */
+}
+<DiskDetails data={data} />;
 ```
 
 **✅ Validation :** L'application doit compiler sans erreurs
@@ -503,6 +543,7 @@ import { DiskAnalysis } from './components/DiskAnalysis';
 ### **ÉTAPE 7 : Tests et validation**
 
 #### 7.1 Lancer le backend
+
 ```bash
 # Terminal 1
 cd /home/lucas-zubiarrain/poc-linux-dash
@@ -511,6 +552,7 @@ python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 #### 7.2 Lancer le frontend
+
 ```bash
 # Terminal 2
 cd /home/lucas-zubiarrain/poc-linux-dash/app
@@ -518,6 +560,7 @@ npm run dev
 ```
 
 #### 7.3 Ouvrir le navigateur
+
 ```
 http://localhost:5173
 ```
@@ -525,22 +568,26 @@ http://localhost:5173
 #### 7.4 Tests à effectuer
 
 **✅ Test 1 : Affichage initial**
+
 - [ ] Le composant "Analyse détaillée du disque" s'affiche
 - [ ] Les 20 plus gros répertoires de `/` sont listés
 - [ ] Les barres de progression sont visibles
 - [ ] Les tailles sont formatées correctement (GB, MB, KB)
 
 **✅ Test 2 : Navigation**
+
 - [ ] Cliquer sur un répertoire pour explorer son contenu
 - [ ] Le chemin actuel s'affiche correctement
 - [ ] Le bouton "Retour" apparaît et fonctionne
 - [ ] L'historique de navigation fonctionne
 
 **✅ Test 3 : Actualisation**
+
 - [ ] Le bouton "Actualiser" recharge les données
 - [ ] Le spinner de chargement s'affiche pendant le chargement
 
 **✅ Test 4 : Gestion des erreurs**
+
 - [ ] Si le backend est arrêté, un message d'erreur s'affiche
 - [ ] Si un répertoire est inaccessible, un message approprié s'affiche
 
@@ -549,10 +596,12 @@ http://localhost:5173
 ## ⚠️ Limitations et considérations
 
 ### Performance
+
 - ⏱️ **Lenteur sur gros systèmes** : L'analyse peut prendre plusieurs secondes voire minutes sur des systèmes avec beaucoup de fichiers
 - 💡 **Solution** : Limiter `max_depth=1` dans `get_directory_sizes()`
 
 ### Permissions
+
 - 🔒 **Accès refusé** : Certains répertoires système nécessitent `sudo`
 - 💡 **Solution** : Lancer le backend avec `sudo` (⚠️ risques de sécurité)
   ```bash
@@ -560,11 +609,13 @@ http://localhost:5173
   ```
 
 ### Sécurité
+
 - 🚨 **Path traversal** : Un utilisateur pourrait analyser n'importe quel chemin
 - 💡 **Solution** : Ajouter une whitelist de chemins autorisés
+
   ```python
   ALLOWED_PATHS = ['/home', '/var/log', '/tmp']
-  
+
   def get_directory_sizes(path="/"):
       if not any(path.startswith(allowed) for allowed in ALLOWED_PATHS):
           raise ValueError("Chemin non autorisé")
@@ -572,6 +623,7 @@ http://localhost:5173
   ```
 
 ### Optimisations futures
+
 - 📊 **Cache** : Mettre en cache les résultats pendant 5 minutes
 - 🔄 **Pagination** : Ajouter une pagination pour les listes longues
 - 📈 **Graphiques** : Ajouter un graphique en camembert (pie chart)
@@ -582,9 +634,11 @@ http://localhost:5173
 ## 🐛 Débogage
 
 ### Problème : "Failed to fetch system data"
+
 **Cause** : Le backend n'est pas lancé ou CORS mal configuré
 
 **Solution** :
+
 ```bash
 # Vérifier que le backend tourne
 curl http://localhost:8000/
@@ -595,9 +649,11 @@ curl http://localhost:8000/
 ```
 
 ### Problème : "Aucun répertoire trouvé"
+
 **Cause** : Permissions insuffisantes
 
 **Solution** :
+
 ```bash
 # Vérifier les permissions
 ls -la /home
@@ -607,9 +663,11 @@ sudo venv/bin/python -m uvicorn main:app --reload
 ```
 
 ### Problème : Analyse très lente
+
 **Cause** : Trop de fichiers à scanner
 
 **Solution** : Réduire la profondeur dans `data.py`
+
 ```python
 # Limiter à 1 niveau de profondeur
 def get_directory_sizes(path="/", max_depth=1):
@@ -644,6 +702,7 @@ def get_directory_sizes(path="/", max_depth=1):
 ## 🎉 Résultat attendu
 
 Une interface moderne et intuitive qui permet de :
+
 1. Voir immédiatement les 20 plus gros répertoires
 2. Cliquer pour explorer un répertoire
 3. Naviguer dans l'arborescence avec un bouton "Retour"

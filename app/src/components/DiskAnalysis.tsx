@@ -1,16 +1,16 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Folder, RefreshCw, ChevronRight, ExternalLink } from 'lucide-react';
-import { fetchDiskAnalysis } from '../services/api';
-import type { DirectorySize } from '../types/system';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Folder, RefreshCw, ChevronRight, ExternalLink } from "lucide-react";
+import { fetchDiskAnalysis } from "../services/api";
+import type { DirectorySize } from "../types/system";
 
 export function DiskAnalysis() {
   const navigate = useNavigate();
   const [directories, setDirectories] = useState<DirectorySize[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentPath, setCurrentPath] = useState('/');
+  const [currentPath, setCurrentPath] = useState("/");
   const [error, setError] = useState<string | null>(null);
-  const [pathHistory, setPathHistory] = useState<string[]>(['/']);
+  const [pathHistory, setPathHistory] = useState<string[]>(["/"]);
 
   const loadData = async (path: string) => {
     try {
@@ -20,7 +20,9 @@ export function DiskAnalysis() {
       setDirectories(data.directories);
       setCurrentPath(data.path);
     } catch (err) {
-      setError('Erreur lors du chargement des données. Vérifiez que le serveur est lancé.');
+      setError(
+        "Erreur lors du chargement des données. Vérifiez que le serveur est lancé."
+      );
       console.error(err);
     } finally {
       setLoading(false);
@@ -54,10 +56,10 @@ export function DiskAnalysis() {
   };
 
   const getBarColor = (percent: number) => {
-    if (percent > 80) return 'from-red-500 to-red-600';
-    if (percent > 60) return 'from-orange-500 to-orange-600';
-    if (percent > 40) return 'from-yellow-500 to-yellow-600';
-    return 'from-blue-500 to-blue-600';
+    if (percent > 80) return "from-red-500 to-red-600";
+    if (percent > 60) return "from-orange-500 to-orange-600";
+    if (percent > 40) return "from-yellow-500 to-yellow-600";
+    return "from-blue-500 to-blue-600";
   };
 
   if (loading) {
@@ -95,11 +97,13 @@ export function DiskAnalysis() {
           <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
             <Folder className="w-4 h-4 text-gray-700" />
           </div>
-          <h2 className="text-base font-semibold tracking-tight">Analyse détaillée du disque</h2>
+          <h2 className="text-base font-semibold tracking-tight">
+            Analyse détaillée du disque
+          </h2>
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => navigate('/disk-explorer')}
+            onClick={() => navigate("/disk-explorer")}
             className="text-xs font-semibold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
           >
             <ExternalLink className="w-3 h-3" />
@@ -125,13 +129,15 @@ export function DiskAnalysis() {
 
       <div className="mb-4 p-3 bg-gray-50 rounded-lg">
         <p className="text-xs text-gray-500 font-medium">Chemin analysé</p>
-        <p className="text-sm font-semibold text-gray-900 font-mono break-all">{currentPath}</p>
+        <p className="text-sm font-semibold text-gray-900 font-mono break-all">
+          {currentPath}
+        </p>
       </div>
 
       <div className="space-y-3">
         {directories.map((dir, index) => {
           const percentOfMax = (dir.size / maxSize) * 100;
-          
+
           return (
             <div
               key={dir.path}
@@ -153,16 +159,20 @@ export function DiskAnalysis() {
                   </span>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
                   <div
-                    className={`h-full bg-linear-to-r ${getBarColor(percentOfMax)} rounded-full shadow-sm transition-all duration-500`}
+                    className={`h-full bg-linear-to-r ${getBarColor(
+                      percentOfMax
+                    )} rounded-full shadow-sm transition-all duration-500`}
                     style={{ width: `${percentOfMax}%` }}
                   />
                 </div>
                 <div className="flex justify-between items-center">
-                  <p className="text-xs text-gray-500 font-mono truncate max-w-md">{dir.path}</p>
+                  <p className="text-xs text-gray-500 font-mono truncate max-w-md">
+                    {dir.path}
+                  </p>
                   <p className="text-xs text-gray-600 font-semibold">
                     {percentOfMax.toFixed(1)}% du plus gros
                   </p>
@@ -176,7 +186,9 @@ export function DiskAnalysis() {
           <div className="text-center py-8 text-gray-500">
             <Folder className="w-12 h-12 mx-auto mb-3 text-gray-300" />
             <p className="font-medium">Aucun répertoire trouvé ou accessible</p>
-            <p className="text-xs mt-1">Essayez un autre chemin ou vérifiez les permissions</p>
+            <p className="text-xs mt-1">
+              Essayez un autre chemin ou vérifiez les permissions
+            </p>
           </div>
         )}
       </div>

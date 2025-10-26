@@ -66,6 +66,7 @@ Le frontend sera accessible sur : **http://localhost:5173**
 ## 📊 KPI Collectés
 
 ### CPU
+
 - Pourcentage d'utilisation global
 - Utilisation par cœur
 - Nombre de cœurs (physiques/logiques)
@@ -73,20 +74,24 @@ Le frontend sera accessible sur : **http://localhost:5173**
 - Load average (1, 5, 15 min)
 
 ### Mémoire
+
 - RAM : total, utilisé, disponible, pourcentage
 - SWAP : total, utilisé, libre, pourcentage
 
 ### Disque
+
 - Espace : total, utilisé, libre, pourcentage
 - I/O : lectures/écritures (bytes + opérations)
 
 ### Réseau
+
 - Bande passante : upload/download
 - Paquets envoyés/reçus
 - Erreurs réseau
 - Nombre de connexions actives
 
 ### Système
+
 - Uptime (temps depuis le dernier boot)
 - Nombre de processus
 - Boot time
@@ -139,7 +144,7 @@ app.add_middleware(
 L'URL de l'API est configurée dans `app/src/services/api.ts` :
 
 ```typescript
-const API_URL = 'http://localhost:8000';
+const API_URL = "http://localhost:8000";
 ```
 
 ## 📖 Documentation des KPI
@@ -162,10 +167,10 @@ Modifiez les fonctions `getColorClass` dans les composants pour ajuster les seui
 
 ```typescript
 const getColorClass = (percent: number) => {
-  if (percent < 30) return 'bg-green-50 text-green-700';
-  if (percent < 60) return 'bg-blue-50 text-blue-700';
-  if (percent < 80) return 'bg-orange-50 text-orange-700';
-  return 'bg-red-50 text-red-700';
+  if (percent < 30) return "bg-green-50 text-green-700";
+  if (percent < 60) return "bg-blue-50 text-blue-700";
+  if (percent < 80) return "bg-orange-50 text-orange-700";
+  return "bg-red-50 text-red-700";
 };
 ```
 

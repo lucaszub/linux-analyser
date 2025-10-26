@@ -1,6 +1,6 @@
-import { Cpu, Database, HardDrive, Activity } from 'lucide-react';
-import type { SystemData } from '../types/system';
-import { formatBytes } from '../utils/formatters';
+import { Cpu, Database, HardDrive, Activity } from "lucide-react";
+import type { SystemData } from "../types/system";
+import { formatBytes } from "../utils/formatters";
 
 interface StatsGridProps {
   data: SystemData | null;
@@ -9,8 +9,14 @@ interface StatsGridProps {
 const StatsGrid = ({ data }: StatsGridProps) => {
   if (!data) return null;
 
-  const downloadSpeed = formatBytes(data.network.io_counters.bytes_recv / data.system.uptime_seconds, 1);
-  const uploadSpeed = formatBytes(data.network.io_counters.bytes_sent / data.system.uptime_seconds, 1);
+  const downloadSpeed = formatBytes(
+    data.network.io_counters.bytes_recv / data.system.uptime_seconds,
+    1
+  );
+  const uploadSpeed = formatBytes(
+    data.network.io_counters.bytes_sent / data.system.uptime_seconds,
+    1
+  );
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -48,7 +54,8 @@ const StatsGrid = ({ data }: StatsGridProps) => {
             <Database className="w-6 h-6 text-white" />
           </div>
           <span className="text-xs text-gray-500 bg-gray-100 px-2.5 py-1 rounded-lg font-medium">
-            {formatBytes(data.memory.virtual.used)} / {formatBytes(data.memory.virtual.total)}
+            {formatBytes(data.memory.virtual.used)} /{" "}
+            {formatBytes(data.memory.virtual.total)}
           </span>
         </div>
         <div className="space-y-2">
@@ -62,7 +69,9 @@ const StatsGrid = ({ data }: StatsGridProps) => {
           <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden mt-4">
             <div
               className="h-full bg-gradient-to-r from-purple-500 to-purple-600 rounded-full transition-all duration-700 shadow-sm"
-              style={{ width: `${Math.min(data.memory.virtual.percent, 100)}%` }}
+              style={{
+                width: `${Math.min(data.memory.virtual.percent, 100)}%`,
+              }}
             ></div>
           </div>
         </div>
@@ -75,7 +84,8 @@ const StatsGrid = ({ data }: StatsGridProps) => {
             <HardDrive className="w-6 h-6 text-white" />
           </div>
           <span className="text-xs text-gray-500 bg-gray-100 px-2.5 py-1 rounded-lg font-medium">
-            {formatBytes(data.disk.usage.used)} / {formatBytes(data.disk.usage.total)}
+            {formatBytes(data.disk.usage.used)} /{" "}
+            {formatBytes(data.disk.usage.total)}
           </span>
         </div>
         <div className="space-y-2">
@@ -113,17 +123,17 @@ const StatsGrid = ({ data }: StatsGridProps) => {
             <div className="flex items-baseline gap-1">
               <span className="text-xs text-gray-400">↓</span>
               <p className="text-2xl font-bold tracking-tighter">
-                {downloadSpeed.split(' ')[0]}
+                {downloadSpeed.split(" ")[0]}
               </p>
             </div>
             <div className="flex items-baseline gap-1">
               <span className="text-xs text-gray-400">↑</span>
               <p className="text-2xl font-bold tracking-tighter">
-                {uploadSpeed.split(' ')[0]}
+                {uploadSpeed.split(" ")[0]}
               </p>
             </div>
             <span className="text-xs text-gray-500 font-medium">
-              {downloadSpeed.split(' ')[1]}/s
+              {downloadSpeed.split(" ")[1]}/s
             </span>
           </div>
         </div>

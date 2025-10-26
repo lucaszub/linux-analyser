@@ -1,40 +1,49 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Folder, 
-  HardDrive, 
-  RefreshCw, 
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  ArrowLeft,
+  Folder,
+  HardDrive,
+  RefreshCw,
   Home,
   ChevronRight,
-  FileText
-} from 'lucide-react';
-import { fetchDiskAnalysisDetailed } from '../services/api';
-import type { DiskAnalysisDetailed, DirectorySizeEnhanced } from '../types/system';
-import { Toaster, toast } from 'react-hot-toast';
-import DiskUsageChart from '../components/DiskUsageChart';
-import FileTypeChart from '../components/FileTypeChart';
-import DirectoryTreeView from '../components/DirectoryTreeView';
+  FileText,
+} from "lucide-react";
+import { fetchDiskAnalysisDetailed } from "../services/api";
+import type {
+  DiskAnalysisDetailed,
+  DirectorySizeEnhanced,
+} from "../types/system";
+import { Toaster, toast } from "react-hot-toast";
+import DiskUsageChart from "../components/DiskUsageChart";
+import FileTypeChart from "../components/FileTypeChart";
+import DirectoryTreeView from "../components/DirectoryTreeView";
 
 export default function DiskExplorerPage() {
   const navigate = useNavigate();
   const [data, setData] = useState<DiskAnalysisDetailed | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentPath, setCurrentPath] = useState('/home');
-  const [pathHistory, setPathHistory] = useState<string[]>(['/home']);
+  const [currentPath, setCurrentPath] = useState("/home");
+  const [pathHistory, setPathHistory] = useState<string[]>(["/home"]);
 
   const loadData = async (path: string) => {
     try {
       setLoading(true);
-      console.log('Loading data for path:', path);
+      console.log("Loading data for path:", path);
       const analysisData = await fetchDiskAnalysisDetailed(path);
-      console.log('Data received:', analysisData);
+      console.log("Data received:", analysisData);
       setData(analysisData);
       setCurrentPath(path);
       toast.success(`Analyse de ${path} terminée`);
     } catch (err) {
-      console.error('Error loading data:', err);
-      toast.error(`Erreur: ${err instanceof Error ? err.message : 'Impossible de charger les données'}`);
+      console.error("Error loading data:", err);
+      toast.error(
+        `Erreur: ${
+          err instanceof Error
+            ? err.message
+            : "Impossible de charger les données"
+        }`
+      );
     } finally {
       setLoading(false);
     }
@@ -60,8 +69,8 @@ export default function DiskExplorerPage() {
   };
 
   const handleHomeClick = () => {
-    setPathHistory(['/']);
-    loadData('/');
+    setPathHistory(["/"]);
+    loadData("/");
   };
 
   const formatSize = (bytes: number) => {
@@ -72,29 +81,29 @@ export default function DiskExplorerPage() {
   };
 
   const getBreadcrumbs = () => {
-    const parts = currentPath.split('/').filter(Boolean);
-    const breadcrumbs = [{ name: 'root', path: '/' }];
-    
-    let accumulatedPath = '';
+    const parts = currentPath.split("/").filter(Boolean);
+    const breadcrumbs = [{ name: "root", path: "/" }];
+
+    let accumulatedPath = "";
     parts.forEach((part) => {
       accumulatedPath += `/${part}`;
       breadcrumbs.push({ name: part, path: accumulatedPath });
     });
-    
+
     return breadcrumbs;
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Toaster position="top-right" />
-      
+
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => navigate('/')}
+                onClick={() => navigate("/")}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 title="Retour au dashboard"
               >
@@ -108,11 +117,13 @@ export default function DiskExplorerPage() {
                   <h1 className="text-lg font-semibold tracking-tight">
                     Explorateur de Disque
                   </h1>
-                  <p className="text-xs text-gray-500">Analyse détaillée de l'utilisation</p>
+                  <p className="text-xs text-gray-500">
+                    Analyse détaillée de l'utilisation
+                  </p>
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <button
                 onClick={handleHomeClick}
@@ -143,13 +154,15 @@ export default function DiskExplorerPage() {
           <div className="mt-4 flex items-center gap-2 text-sm">
             {getBreadcrumbs().map((crumb, index) => (
               <div key={crumb.path} className="flex items-center gap-2">
-                {index > 0 && <ChevronRight className="w-4 h-4 text-gray-400" />}
+                {index > 0 && (
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                )}
                 <button
                   onClick={() => loadData(crumb.path)}
                   className={`px-2 py-1 rounded-lg transition-colors ${
                     crumb.path === currentPath
-                      ? 'bg-blue-100 text-blue-700 font-semibold'
-                      : 'text-gray-600 hover:bg-gray-100'
+                      ? "bg-blue-100 text-blue-700 font-semibold"
+                      : "text-gray-600 hover:bg-gray-100"
                   }`}
                 >
                   {crumb.name}
@@ -220,21 +233,23 @@ interface StatCardProps {
   label: string;
   value: string;
   percentage?: number;
-  color: 'blue' | 'purple' | 'green' | 'orange';
+  color: "blue" | "purple" | "green" | "orange";
 }
 
 function StatCard({ icon, label, value, percentage, color }: StatCardProps) {
   const colorClasses = {
-    blue: 'from-blue-500 to-blue-600 shadow-blue-500/30',
-    purple: 'from-purple-500 to-purple-600 shadow-purple-500/30',
-    green: 'from-green-500 to-green-600 shadow-green-500/30',
-    orange: 'from-orange-500 to-orange-600 shadow-orange-500/30',
+    blue: "from-blue-500 to-blue-600 shadow-blue-500/30",
+    purple: "from-purple-500 to-purple-600 shadow-purple-500/30",
+    green: "from-green-500 to-green-600 shadow-green-500/30",
+    orange: "from-orange-500 to-orange-600 shadow-orange-500/30",
   };
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg transition-all">
       <div className="flex items-start justify-between mb-4">
-        <div className={`w-12 h-12 bg-linear-to-br ${colorClasses[color]} rounded-xl flex items-center justify-center shadow-lg`}>
+        <div
+          className={`w-12 h-12 bg-linear-to-br ${colorClasses[color]} rounded-xl flex items-center justify-center shadow-lg`}
+        >
           <div className="text-white">{icon}</div>
         </div>
       </div>

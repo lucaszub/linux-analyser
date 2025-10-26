@@ -26,6 +26,7 @@ Dashboard → Cliquer sur "Explorer en détail" → Page dédiée
 ```
 
 ### Stack technique supplémentaire
+
 - **React Router** : Navigation entre pages
 - **Recharts** : Graphiques interactifs
 - **React Hot Toast** : Notifications
@@ -42,6 +43,7 @@ Dashboard → Cliquer sur "Explorer en détail" → Page dédiée
 ### **ÉTAPE 1.1 : Enrichir les données backend**
 
 #### Objectif
+
 Ajouter des informations plus détaillées : pourcentage du total, types de fichiers, métadonnées.
 
 #### Fichier : `data.py`
@@ -65,7 +67,7 @@ def get_partition_total_size(path: str) -> int:
             if path.startswith(partition.mountpoint):
                 usage = psutil.disk_usage(partition.mountpoint)
                 return usage.total
-        
+
         # Par défaut, retourner la taille de /
         return psutil.disk_usage('/').total
     except Exception:
@@ -75,13 +77,13 @@ def get_partition_total_size(path: str) -> int:
 def get_file_type_distribution(path: str) -> Dict[str, Dict[str, Any]]:
     """
     Analyse la distribution des types de fichiers dans un répertoire.
-    
+
     Returns:
         Dict avec extensions comme clés et {count, size, percent} comme valeurs
     """
     file_types = defaultdict(lambda: {"count": 0, "size": 0})
     total_size = 0
-    
+
     try:
         for entry in os.scandir(path):
             if entry.is_file(follow_symlinks=False):
@@ -95,28 +97,28 @@ def get_file_type_distribution(path: str) -> Dict[str, Dict[str, Any]]:
                     continue
     except (PermissionError, OSError):
         pass
-    
+
     # Calculer les pourcentages
     for ext in file_types:
         if total_size > 0:
             file_types[ext]["percent"] = round((file_types[ext]["size"] / total_size) * 100, 2)
         else:
             file_types[ext]["percent"] = 0
-    
+
     # Trier par taille et retourner le top 10
     sorted_types = sorted(
         file_types.items(),
         key=lambda x: x[1]["size"],
         reverse=True
     )[:10]
-    
+
     return dict(sorted_types)
 
 
 def get_directory_sizes_enhanced(path: str = "/", max_depth: int = 1) -> Dict[str, Any]:
     """
     Version améliorée avec statistiques détaillées.
-    
+
     Returns:
         Dict avec:
         - directories: Liste des répertoires avec stats
@@ -128,7 +130,7 @@ def get_directory_sizes_enhanced(path: str = "/", max_depth: int = 1) -> Dict[st
     directories = []
     total_analyzed_size = 0
     partition_total = get_partition_total_size(path)
-    
+
     try:
         for entry in os.scandir(path):
             if entry.is_dir(follow_symlinks=False):
@@ -137,7 +139,7 @@ def get_directory_sizes_enhanced(path: str = "/", max_depth: int = 1) -> Dict[st
                     size = 0
                     file_count = 0
                     dir_count = 0
-                    
+
                     for dirpath, dirnames, filenames in os.walk(entry.path):
                         dir_count += len(dirnames)
                         for filename in filenames:
@@ -148,10 +150,10 @@ def get_directory_sizes_enhanced(path: str = "/", max_depth: int = 1) -> Dict[st
                                 file_count += 1
                             except (OSError, FileNotFoundError):
                                 continue
-                    
+
                     # Calculer le pourcentage par rapport à la partition
                     percent_of_partition = (size / partition_total * 100) if partition_total > 0 else 0
-                    
+
                     directories.append({
                         "path": entry.path,
                         "name": entry.name,
@@ -162,28 +164,28 @@ def get_directory_sizes_enhanced(path: str = "/", max_depth: int = 1) -> Dict[st
                         "file_count": file_count,
                         "dir_count": dir_count
                     })
-                    
+
                     total_analyzed_size += size
-                    
+
                 except (PermissionError, OSError):
                     continue
-        
+
         # Trier par taille décroissante
         directories.sort(key=lambda x: x['size'], reverse=True)
-        
+
         # Top 20
         top_directories = directories[:20]
-        
+
         # Calculer le pourcentage par rapport au total analysé pour chaque dir
         for dir_info in top_directories:
             dir_info["percent_of_analyzed"] = round(
                 (dir_info["size"] / total_analyzed_size * 100) if total_analyzed_size > 0 else 0,
                 2
             )
-        
+
         # Obtenir la distribution des types de fichiers
         file_types = get_file_type_distribution(path)
-        
+
         return {
             "path": path,
             "directories": top_directories,
@@ -198,7 +200,7 @@ def get_directory_sizes_enhanced(path: str = "/", max_depth: int = 1) -> Dict[st
             "file_type_distribution": file_types,
             "directory_count": len(directories)
         }
-        
+
     except (PermissionError, OSError, FileNotFoundError) as e:
         print(f"Erreur lors de l'analyse de {path}: {e}")
         return {
@@ -218,8 +220,8 @@ def get_directory_sizes_enhanced(path: str = "/", max_depth: int = 1) -> Dict[st
 
 ```python
 from data import (
-    get_system_data, 
-    get_disk_partitions_details, 
+    get_system_data,
+    get_disk_partitions_details,
     get_directory_sizes,
     get_directory_sizes_enhanced  # Nouveau
 )
@@ -230,10 +232,10 @@ from data import (
 async def disk_analysis_detailed(path: str = "/"):
     """
     Endpoint pour l'analyse détaillée avec statistiques avancées.
-    
+
     Query params:
         path (str): Chemin à analyser (défaut: "/")
-    
+
     Returns:
         JSON: {
             "path": "/home",
@@ -305,19 +307,23 @@ export interface DiskAnalysisDetailed {
 #### Fichier : `app/src/services/api.ts`
 
 ```typescript
-import type { 
-  SystemData, 
-  DiskPartition, 
+import type {
+  SystemData,
+  DiskPartition,
   DiskAnalysis,
-  DiskAnalysisDetailed  // Nouveau
-} from '../types/system';
+  DiskAnalysisDetailed, // Nouveau
+} from "../types/system";
 
 // ... existing functions ...
 
-export const fetchDiskAnalysisDetailed = async (path: string = '/'): Promise<DiskAnalysisDetailed> => {
-  const response = await fetch(`${API_URL}/disk/analysis/detailed?path=${encodeURIComponent(path)}`);
+export const fetchDiskAnalysisDetailed = async (
+  path: string = "/"
+): Promise<DiskAnalysisDetailed> => {
+  const response = await fetch(
+    `${API_URL}/disk/analysis/detailed?path=${encodeURIComponent(path)}`
+  );
   if (!response.ok) {
-    throw new Error('Failed to fetch detailed disk analysis');
+    throw new Error("Failed to fetch detailed disk analysis");
   }
   return response.json();
 };
@@ -332,14 +338,14 @@ export const fetchDiskAnalysisDetailed = async (path: string = '/'): Promise<Dis
 #### Fichier : `app/src/main.tsx`
 
 ```typescript
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import App from './App.tsx';
-import DiskExplorerPage from './pages/DiskExplorerPage.tsx';
-import './index.css';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import App from "./App.tsx";
+import DiskExplorerPage from "./pages/DiskExplorerPage.tsx";
+import "./index.css";
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
       <Routes>
@@ -347,7 +353,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Route path="/disk-explorer" element={<DiskExplorerPage />} />
       </Routes>
     </BrowserRouter>
-  </React.StrictMode>,
+  </React.StrictMode>
 );
 ```
 
@@ -366,31 +372,34 @@ mkdir -p /home/lucas-zubiarrain/poc-linux-dash/app/src/pages
 #### Fichier : `app/src/pages/DiskExplorerPage.tsx`
 
 ```typescript
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Folder, 
-  HardDrive, 
-  RefreshCw, 
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  ArrowLeft,
+  Folder,
+  HardDrive,
+  RefreshCw,
   Home,
   ChevronRight,
   PieChart,
-  FileText
-} from 'lucide-react';
-import { fetchDiskAnalysisDetailed } from '../services/api';
-import type { DiskAnalysisDetailed, DirectorySizeEnhanced } from '../types/system';
-import { Toaster, toast } from 'react-hot-toast';
-import DiskUsageChart from '../components/DiskUsageChart';
-import FileTypeChart from '../components/FileTypeChart';
-import DirectoryTreeView from '../components/DirectoryTreeView';
+  FileText,
+} from "lucide-react";
+import { fetchDiskAnalysisDetailed } from "../services/api";
+import type {
+  DiskAnalysisDetailed,
+  DirectorySizeEnhanced,
+} from "../types/system";
+import { Toaster, toast } from "react-hot-toast";
+import DiskUsageChart from "../components/DiskUsageChart";
+import FileTypeChart from "../components/FileTypeChart";
+import DirectoryTreeView from "../components/DirectoryTreeView";
 
 export default function DiskExplorerPage() {
   const navigate = useNavigate();
   const [data, setData] = useState<DiskAnalysisDetailed | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentPath, setCurrentPath] = useState('/');
-  const [pathHistory, setPathHistory] = useState<string[]>(['/']);
+  const [currentPath, setCurrentPath] = useState("/");
+  const [pathHistory, setPathHistory] = useState<string[]>(["/"]);
 
   const loadData = async (path: string) => {
     try {
@@ -401,7 +410,7 @@ export default function DiskExplorerPage() {
       toast.success(`Analyse de ${path} terminée`);
     } catch (err) {
       console.error(err);
-      toast.error('Erreur lors du chargement des données');
+      toast.error("Erreur lors du chargement des données");
     } finally {
       setLoading(false);
     }
@@ -427,8 +436,8 @@ export default function DiskExplorerPage() {
   };
 
   const handleHomeClick = () => {
-    setPathHistory(['/']);
-    loadData('/');
+    setPathHistory(["/"]);
+    loadData("/");
   };
 
   const formatSize = (bytes: number) => {
@@ -439,29 +448,29 @@ export default function DiskExplorerPage() {
   };
 
   const getBreadcrumbs = () => {
-    const parts = currentPath.split('/').filter(Boolean);
-    const breadcrumbs = [{ name: 'root', path: '/' }];
-    
-    let accumulatedPath = '';
+    const parts = currentPath.split("/").filter(Boolean);
+    const breadcrumbs = [{ name: "root", path: "/" }];
+
+    let accumulatedPath = "";
     parts.forEach((part) => {
       accumulatedPath += `/${part}`;
       breadcrumbs.push({ name: part, path: accumulatedPath });
     });
-    
+
     return breadcrumbs;
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Toaster position="top-right" />
-      
+
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => navigate('/')}
+                onClick={() => navigate("/")}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 title="Retour au dashboard"
               >
@@ -475,11 +484,13 @@ export default function DiskExplorerPage() {
                   <h1 className="text-lg font-semibold tracking-tight">
                     Explorateur de Disque
                   </h1>
-                  <p className="text-xs text-gray-500">Analyse détaillée de l'utilisation</p>
+                  <p className="text-xs text-gray-500">
+                    Analyse détaillée de l'utilisation
+                  </p>
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <button
                 onClick={handleHomeClick}
@@ -510,13 +521,15 @@ export default function DiskExplorerPage() {
           <div className="mt-4 flex items-center gap-2 text-sm">
             {getBreadcrumbs().map((crumb, index) => (
               <div key={crumb.path} className="flex items-center gap-2">
-                {index > 0 && <ChevronRight className="w-4 h-4 text-gray-400" />}
+                {index > 0 && (
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                )}
                 <button
                   onClick={() => loadData(crumb.path)}
                   className={`px-2 py-1 rounded-lg transition-colors ${
                     crumb.path === currentPath
-                      ? 'bg-blue-100 text-blue-700 font-semibold'
-                      : 'text-gray-600 hover:bg-gray-100'
+                      ? "bg-blue-100 text-blue-700 font-semibold"
+                      : "text-gray-600 hover:bg-gray-100"
                   }`}
                 >
                   {crumb.name}
@@ -587,21 +600,23 @@ interface StatCardProps {
   label: string;
   value: string;
   percentage?: number;
-  color: 'blue' | 'purple' | 'green' | 'orange';
+  color: "blue" | "purple" | "green" | "orange";
 }
 
 function StatCard({ icon, label, value, percentage, color }: StatCardProps) {
   const colorClasses = {
-    blue: 'from-blue-500 to-blue-600 shadow-blue-500/30',
-    purple: 'from-purple-500 to-purple-600 shadow-purple-500/30',
-    green: 'from-green-500 to-green-600 shadow-green-500/30',
-    orange: 'from-orange-500 to-orange-600 shadow-orange-500/30',
+    blue: "from-blue-500 to-blue-600 shadow-blue-500/30",
+    purple: "from-purple-500 to-purple-600 shadow-purple-500/30",
+    green: "from-green-500 to-green-600 shadow-green-500/30",
+    orange: "from-orange-500 to-orange-600 shadow-orange-500/30",
   };
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg transition-all">
       <div className="flex items-start justify-between mb-4">
-        <div className={`w-12 h-12 bg-linear-to-br ${colorClasses[color]} rounded-xl flex items-center justify-center shadow-lg`}>
+        <div
+          className={`w-12 h-12 bg-linear-to-br ${colorClasses[color]} rounded-xl flex items-center justify-center shadow-lg`}
+        >
           <div className="text-white">{icon}</div>
         </div>
       </div>
@@ -626,23 +641,36 @@ function StatCard({ icon, label, value, percentage, color }: StatCardProps) {
 #### Fichier : `app/src/components/DiskUsageChart.tsx`
 
 ```typescript
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
-import type { DiskAnalysisDetailed } from '../types/system';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Legend,
+  Tooltip,
+} from "recharts";
+import type { DiskAnalysisDetailed } from "../types/system";
 
 interface Props {
   data: DiskAnalysisDetailed;
 }
 
 const COLORS = [
-  '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', 
-  '#10b981', '#ef4444', '#6366f1', '#14b8a6'
+  "#3b82f6",
+  "#8b5cf6",
+  "#ec4899",
+  "#f59e0b",
+  "#10b981",
+  "#ef4444",
+  "#6366f1",
+  "#14b8a6",
 ];
 
 export default function DiskUsageChart({ data }: Props) {
   const chartData = data.directories.slice(0, 8).map((dir) => ({
     name: dir.name,
     value: dir.size,
-    percent: dir.percent_of_analyzed
+    percent: dir.percent_of_analyzed,
   }));
 
   const formatBytes = (bytes: number) => {
@@ -653,7 +681,9 @@ export default function DiskUsageChart({ data }: Props) {
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-6">
-      <h3 className="text-base font-semibold mb-4">Répartition de l'espace (Top 8)</h3>
+      <h3 className="text-base font-semibold mb-4">
+        Répartition de l'espace (Top 8)
+      </h3>
       <ResponsiveContainer width="100%" height={300}>
         <PieChart>
           <Pie
@@ -667,7 +697,10 @@ export default function DiskUsageChart({ data }: Props) {
             dataKey="value"
           >
             {chartData.map((_, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              <Cell
+                key={`cell-${index}`}
+                fill={COLORS[index % COLORS.length]}
+              />
             ))}
           </Pie>
           <Tooltip formatter={(value: number) => formatBytes(value)} />
@@ -682,20 +715,30 @@ export default function DiskUsageChart({ data }: Props) {
 #### Fichier : `app/src/components/FileTypeChart.tsx`
 
 ```typescript
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import type { DiskAnalysisDetailed } from '../types/system';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import type { DiskAnalysisDetailed } from "../types/system";
 
 interface Props {
   data: DiskAnalysisDetailed;
 }
 
 export default function FileTypeChart({ data }: Props) {
-  const chartData = Object.entries(data.file_type_distribution).map(([ext, info]) => ({
-    extension: ext,
-    size: info.size,
-    count: info.count,
-    percent: info.percent
-  }));
+  const chartData = Object.entries(data.file_type_distribution).map(
+    ([ext, info]) => ({
+      extension: ext,
+      size: info.size,
+      count: info.count,
+      percent: info.percent,
+    })
+  );
 
   const formatBytes = (bytes: number) => {
     if (bytes >= 1024 ** 3) return `${(bytes / 1024 ** 3).toFixed(1)} GB`;
@@ -705,7 +748,9 @@ export default function FileTypeChart({ data }: Props) {
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-6">
-      <h3 className="text-base font-semibold mb-4">Distribution par type de fichier</h3>
+      <h3 className="text-base font-semibold mb-4">
+        Distribution par type de fichier
+      </h3>
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" />
@@ -723,8 +768,8 @@ export default function FileTypeChart({ data }: Props) {
 #### Fichier : `app/src/components/DirectoryTreeView.tsx`
 
 ```typescript
-import { Folder, ChevronRight, File, Users } from 'lucide-react';
-import type { DirectorySizeEnhanced } from '../types/system';
+import { Folder, ChevronRight, File, Users } from "lucide-react";
+import type { DirectorySizeEnhanced } from "../types/system";
 
 interface Props {
   directories: DirectorySizeEnhanced[];
@@ -732,18 +777,22 @@ interface Props {
   formatSize: (bytes: number) => string;
 }
 
-export default function DirectoryTreeView({ directories, onDirectoryClick, formatSize }: Props) {
+export default function DirectoryTreeView({
+  directories,
+  onDirectoryClick,
+  formatSize,
+}: Props) {
   const getColorByPercent = (percent: number) => {
-    if (percent > 50) return 'from-red-500 to-red-600';
-    if (percent > 30) return 'from-orange-500 to-orange-600';
-    if (percent > 15) return 'from-yellow-500 to-yellow-600';
-    return 'from-blue-500 to-blue-600';
+    if (percent > 50) return "from-red-500 to-red-600";
+    if (percent > 30) return "from-orange-500 to-orange-600";
+    if (percent > 15) return "from-yellow-500 to-yellow-600";
+    return "from-blue-500 to-blue-600";
   };
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-6">
       <h3 className="text-base font-semibold mb-6">Répertoires (Top 20)</h3>
-      
+
       <div className="space-y-3">
         {directories.map((dir, index) => (
           <div
@@ -758,16 +807,22 @@ export default function DirectoryTreeView({ directories, onDirectoryClick, forma
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-base font-bold truncate">{dir.name}</span>
+                    <span className="text-base font-bold truncate">
+                      {dir.name}
+                    </span>
                     <ChevronRight className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                   </div>
-                  <p className="text-xs text-gray-500 font-mono truncate">{dir.path}</p>
+                  <p className="text-xs text-gray-500 font-mono truncate">
+                    {dir.path}
+                  </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-4 shrink-0">
                 <div className="text-right">
-                  <p className="text-lg font-bold text-gray-900">{formatSize(dir.size)}</p>
+                  <p className="text-lg font-bold text-gray-900">
+                    {formatSize(dir.size)}
+                  </p>
                   <p className="text-xs text-gray-500">#{index + 1}</p>
                 </div>
               </div>
@@ -777,21 +832,33 @@ export default function DirectoryTreeView({ directories, onDirectoryClick, forma
             <div className="space-y-3">
               <div>
                 <div className="flex justify-between items-center mb-1">
-                  <span className="text-xs text-gray-500 font-medium">% de la partition</span>
-                  <span className="text-xs font-bold text-gray-700">{dir.percent_of_partition.toFixed(2)}%</span>
+                  <span className="text-xs text-gray-500 font-medium">
+                    % de la partition
+                  </span>
+                  <span className="text-xs font-bold text-gray-700">
+                    {dir.percent_of_partition.toFixed(2)}%
+                  </span>
                 </div>
                 <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div
-                    className={`h-full bg-linear-to-r ${getColorByPercent(dir.percent_of_partition)} transition-all duration-500`}
-                    style={{ width: `${Math.min(dir.percent_of_partition, 100)}%` }}
+                    className={`h-full bg-linear-to-r ${getColorByPercent(
+                      dir.percent_of_partition
+                    )} transition-all duration-500`}
+                    style={{
+                      width: `${Math.min(dir.percent_of_partition, 100)}%`,
+                    }}
                   />
                 </div>
               </div>
 
               <div>
                 <div className="flex justify-between items-center mb-1">
-                  <span className="text-xs text-gray-500 font-medium">% du total analysé</span>
-                  <span className="text-xs font-bold text-blue-700">{dir.percent_of_analyzed.toFixed(2)}%</span>
+                  <span className="text-xs text-gray-500 font-medium">
+                    % du total analysé
+                  </span>
+                  <span className="text-xs font-bold text-blue-700">
+                    {dir.percent_of_analyzed.toFixed(2)}%
+                  </span>
                 </div>
                 <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div
@@ -807,13 +874,19 @@ export default function DirectoryTreeView({ directories, onDirectoryClick, forma
               <div className="flex items-center gap-2">
                 <File className="w-4 h-4 text-gray-400" />
                 <span className="text-xs text-gray-600">
-                  <span className="font-semibold">{dir.file_count.toLocaleString()}</span> fichiers
+                  <span className="font-semibold">
+                    {dir.file_count.toLocaleString()}
+                  </span>{" "}
+                  fichiers
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <Folder className="w-4 h-4 text-gray-400" />
                 <span className="text-xs text-gray-600">
-                  <span className="font-semibold">{dir.dir_count.toLocaleString()}</span> sous-répertoires
+                  <span className="font-semibold">
+                    {dir.dir_count.toLocaleString()}
+                  </span>{" "}
+                  sous-répertoires
                 </span>
               </div>
             </div>
@@ -834,18 +907,18 @@ export default function DirectoryTreeView({ directories, onDirectoryClick, forma
 Ajouter un bouton "Explorer en détail" :
 
 ```typescript
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
 // Dans le composant, ajouter :
 const navigate = useNavigate();
 
 // Dans le JSX, ajouter après le titre :
 <button
-  onClick={() => navigate('/disk-explorer')}
+  onClick={() => navigate("/disk-explorer")}
   className="text-xs font-semibold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors"
 >
   Explorer en détail →
-</button>
+</button>;
 ```
 
 ---
@@ -889,6 +962,7 @@ Une page dédiée avec :
 ## 📋 **Checklist d'implémentation**
 
 ### Backend
+
 - [ ] Ajouter `get_directory_sizes_enhanced()` dans `data.py`
 - [ ] Ajouter `get_partition_total_size()` dans `data.py`
 - [ ] Ajouter `get_file_type_distribution()` dans `data.py`
@@ -896,12 +970,14 @@ Une page dédiée avec :
 - [ ] Tester les endpoints avec `curl`
 
 ### Frontend - Configuration
+
 - [ ] Installer `react-router-dom`, `recharts`, `react-hot-toast`
 - [ ] Mettre à jour `main.tsx` avec le routing
 - [ ] Ajouter les nouveaux types dans `system.ts`
 - [ ] Ajouter `fetchDiskAnalysisDetailed()` dans `api.ts`
 
 ### Frontend - Composants
+
 - [ ] Créer le dossier `pages/`
 - [ ] Créer `DiskExplorerPage.tsx`
 - [ ] Créer `DiskUsageChart.tsx`
@@ -910,6 +986,7 @@ Une page dédiée avec :
 - [ ] Ajouter le bouton "Explorer en détail" dans `DiskAnalysis.tsx`
 
 ### Tests
+
 - [ ] Backend démarre sans erreur
 - [ ] Frontend compile sans erreur
 - [ ] Navigation entre pages fonctionne
@@ -934,6 +1011,7 @@ npm run dev
 ```
 
 **URLs :**
+
 - Dashboard : `http://localhost:5173/`
 - Explorer : `http://localhost:5173/disk-explorer`
 
