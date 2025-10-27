@@ -7,7 +7,7 @@ import StatsGrid from "./components/StatsGrid";
 import SystemInfo from "./components/SystemInfo";
 import CPUCores from "./components/CPUCores";
 import DiskDetails from "./components/DiskDetails";
-import { DiskAnalysis } from "./components/DiskAnalysis";
+import { RootDiskAnalysis } from "./components/RootDiskAnalysis";
 import { FolderSearch, ArrowRight } from "lucide-react";
 import "./App.css";
 
@@ -98,9 +98,9 @@ function App() {
               <CPUCores data={data} onRefresh={loadData} />
             </div>
 
-            {/* Analyse détaillée du disque */}
+            {/* Analyse des dossiers racine */}
             <div className="mb-6">
-              <DiskAnalysis />
+              <RootDiskAnalysis />
             </div>
 
             <DiskDetails data={data} />

@@ -116,3 +116,24 @@ export interface DiskAnalysisDetailed {
   file_type_distribution: FileTypeDistribution;
   directory_count: number;
 }
+
+// Types pour l'analyse des dossiers racine (/)
+export interface RootDirectoryItem {
+  path: string;
+  name: string;
+  size: number;
+  size_human: string;
+  percent: number;
+  file_count: number;
+  dir_count: number;
+}
+
+export interface RootAnalysisResponse {
+  items: RootDirectoryItem[];
+  total_size: number;
+  total_size_human: string;
+  directory_count: number;
+  skipped_count: number;
+  path: string;
+  timestamp: number;
+}

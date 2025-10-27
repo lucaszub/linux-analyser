@@ -311,3 +311,161 @@ def get_directory_sizes_enhanced(path: str = "/", max_depth: int = 1) -> Dict[st
             "directory_count": 0,
             "error": str(e)
         }
+
+
+def format_size_human(bytes_size: int) -> str:
+    """
+    Convertit une taille en bytes en format human-readable (comme 'du -h').
+    
+    Args:
+        bytes_size: Taille en bytes
+    
+    Returns:
+        String formaté (ex: '1.2G', '500M', '10K')
+    
+    Examples:
+        >>> format_size_human(1234567890)
+        '1.2G'
+        >>> format_size_human(5242880)
+        '5.0M'
+    """
+    if bytes_size == 0:
+        return "0B"
+    
+    # Unités dans l'ordre (base 1024 comme 'du')
+    units = ['B', 'K', 'M', 'G', 'T', 'P']
+    size = float(bytes_size)
+    unit_index = 0
+    
+    while size >= 1024.0 and unit_index < len(units) - 1:
+        size /= 1024.0
+        unit_index += 1
+    
+    # Formatage : 1 décimale sauf pour les bytes
+    if unit_index == 0:
+        return f"{int(size)}B"
+    else:
+        return f"{size:.1f}{units[unit_index]}"
+
+
+def get_root_directories_sizes(max_depth: int = 1) -> Dict[str, Any]:
+    """
+    Scanne les dossiers racine (/) et retourne les 20 plus gros.
+    Équivalent Python de: du -h / --max-depth=1 | sort -hr | head -n 20
+    
+    Args:
+        max_depth: Profondeur de scan (défaut: 1 pour rapidité)
+    
+    Returns:
+        Dict avec:
+        - items: Liste des 20 plus gros dossiers avec taille
+        - total_size: Taille totale analysée en bytes
+        - skipped: Nombre de dossiers inaccessibles
+    """
+    directories = []
+    total_size = 0
+    skipped_count = 0
+    
+    # Dossiers virtuels à ignorer (fichiers non-réels)
+    VIRTUAL_DIRS = {
+        'proc',      # Système de fichiers processus (virtuel)
+        'sys',       # Système de fichiers sysfs (virtuel)
+        'dev',       # Périphériques (virtuels)
+        'run',       # Runtime data (tmpfs)
+    }
+    
+    try:
+        # Scanner tous les dossiers à la racine /
+        for entry in os.scandir('/'):
+            if entry.is_dir(follow_symlinks=False):
+                try:
+                    dir_path = entry.path
+                    dir_name = entry.name
+                    
+                    # Ignorer les dossiers virtuels
+                    if dir_name in VIRTUAL_DIRS:
+                        skipped_count += 1
+                        continue
+                    
+                    # Calculer la taille du dossier (limité en profondeur)
+                    size = 0
+                    file_count = 0
+                    dir_count = 0
+                    
+                    # Niveau 1 : fichiers directs dans le dossier
+                    try:
+                        for item in os.scandir(dir_path):
+                            try:
+                                if item.is_file(follow_symlinks=False):
+                                    size += item.stat().st_size
+                                    file_count += 1
+                                elif item.is_dir(follow_symlinks=False):
+                                    dir_count += 1
+                                    # Niveau 2 : fichiers dans les sous-dossiers (si max_depth > 0)
+                                    if max_depth > 0:
+                                        try:
+                                            for subitem in os.scandir(item.path):
+                                                if subitem.is_file(follow_symlinks=False):
+                                                    size += subitem.stat().st_size
+                                                    file_count += 1
+                                        except (PermissionError, OSError):
+                                            pass
+                            except (OSError, PermissionError):
+                                continue
+                    except (PermissionError, OSError):
+                        # Dossier inaccessible (ex: /root, /lost+found)
+                        skipped_count += 1
+                        continue
+                    
+                    # Ajouter à la liste (même si taille = 0 pour info)
+                    directories.append({
+                        "path": dir_path,
+                        "name": dir_name,
+                        "size": size,
+                        "size_human": format_size_human(size),
+                        "file_count": file_count,
+                        "dir_count": dir_count
+                    })
+                    
+                    total_size += size
+                    
+                except (PermissionError, OSError) as e:
+                    print(f"Impossible d'accéder à {entry.path}: {e}")
+                    skipped_count += 1
+                    continue
+        
+        # Trier par taille décroissante (du plus grand au plus petit)
+        directories.sort(key=lambda x: x['size'], reverse=True)
+        
+        # Limiter au top 20
+        top_directories = directories[:20]
+        
+        # Calculer le pourcentage pour chaque dossier
+        for dir_info in top_directories:
+            dir_info["percent"] = round(
+                (dir_info["size"] / total_size * 100) if total_size > 0 else 0,
+                2
+            )
+        
+        return {
+            "items": top_directories,
+            "total_size": total_size,
+            "total_size_human": format_size_human(total_size),
+            "directory_count": len(directories),
+            "skipped_count": skipped_count,
+            "path": "/",
+            "timestamp": time.time()
+        }
+        
+    except Exception as e:
+        print(f"Erreur lors de l'analyse de /: {e}")
+        return {
+            "items": [],
+            "total_size": 0,
+            "total_size_human": "0B",
+            "directory_count": 0,
+            "skipped_count": 0,
+            "path": "/",
+            "error": str(e),
+            "timestamp": time.time()
+        }

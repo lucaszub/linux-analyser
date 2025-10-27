@@ -3,6 +3,7 @@ import type {
   DiskPartition,
   DiskAnalysis,
   DiskAnalysisDetailed,
+  RootAnalysisResponse,
 } from "../types/system";
 
 const API_URL = "http://localhost:8000";
@@ -45,6 +46,18 @@ export const fetchDiskAnalysisDetailed = async (
   );
   if (!response.ok) {
     throw new Error("Failed to fetch detailed disk analysis");
+  }
+  return response.json();
+};
+
+export const fetchRootAnalysis = async (
+  force: boolean = false
+): Promise<RootAnalysisResponse> => {
+  const response = await fetch(
+    `${API_URL}/disk/root-analysis?force=${force}`
+  );
+  if (!response.ok) {
+    throw new Error("Failed to fetch root analysis");
   }
   return response.json();
 };
